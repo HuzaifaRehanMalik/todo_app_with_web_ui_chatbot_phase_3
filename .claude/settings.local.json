@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch --all --prune)",
+      "Bash(bash -c \".specify/scripts/powershell/create-new-feature.ps1 -Json ''The system shall implement a chatbot feature within the backend that allows authenticated users to interact with their todo items using natural language, where users can submit messages to a single chat endpoint and receive AI-generated, context-aware responses; the chatbot must accurately interpret user intent to create, update, complete, delete, and query todos, convert those intents into validated backend operations, ensure user-specific data isolation, enforce all business rules before modifying data, handle errors gracefully, and return structured responses containing the chatbot reply, any todo actions performed, and relevant metadata.'' --json --number 1 --short-name ''chatbot-feature''\")",
+      "Bash(bash -c \".specify/scripts/powershell/setup-plan.ps1 -Json\")"
+    ]
+  }
+}

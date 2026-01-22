@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -X GET http://127.0.0.1:8000/health)",
+      "Bash(curl -X GET http://127.0.0.1:8000/api/v1/todos/ -H \"Origin: http://localhost:3000\" -H \"Content-Type: application/json\")",
+      "Bash(curl -X POST http://127.0.0.1:8000/api/v1/todos/ -H \"Origin: http://localhost:3000\" -H \"Content-Type: application/json\" -d '{\"\"title\"\":\"\"Test Todo with CORS\"\",\"\"description\"\":\"\"Testing CORS functionality\"\",\"\"completed\"\":false}')",
+      "Bash(taskkill /PID 7944 /F)",
+      "Bash(taskkill /pid 7944 /f)",
+      "Bash(powershell -Command \"Stop-Process -Id 7944 -Force\")",
+      "Bash(rm -f .next/dev/lock)",
+      "Bash(npm run dev)"
+    ]
+  }
+}

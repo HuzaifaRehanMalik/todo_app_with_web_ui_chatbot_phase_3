@@ -1,0 +1,75 @@
+/**
+ * Chatbot Toggle Component Styles
+ * Fixed button in the bottom-left corner
+ */
+
+.chatbot-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.chatbot-toggle:hover {
+  background-color: #4338ca;
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.chatbot-toggle:focus {
+  outline: none;
+  ring: 2px solid rgba(99, 102, 241, 0.5);
+}
+
+.chatbot-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.chatbot-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Animation for the close icon */
+.line {
+  position: absolute;
+  background-color: white;
+  border-radius: 2px;
+}
+
+.line-1 {
+  width: 20px;
+  height: 2px;
+  transform: rotate(45deg);
+}
+
+.line-2 {
+  width: 20px;
+  height: 2px;
+  transform: rotate(-45deg);
+}
+
+/* Button color when open */
+.chatbot-toggle.open {
+  background-color: #ef4444;
+}
+
+.chatbot-toggle.open:hover {
+  background-color: #dc2626;
+}
