@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import "./ChatBot.css";
+
 
 type ChatRole = "user" | "assistant";
 
