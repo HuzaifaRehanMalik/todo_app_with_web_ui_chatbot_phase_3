@@ -333,12 +333,14 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#F9FAFB",
   },
   input: {
-    flex: 1,
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(0,0,0,0.12)",
-    outline: "none",
-    fontSize: 13,
+  flex: 1,
+  padding: "10px 12px",
+  borderRadius: 12,
+  border: "1px solid rgba(0,0,0,0.12)",
+  outline: "none",
+  fontSize: 13,
+  background: "white",        // ✅ background
+  color: "#111827",           // ✅ text color (dark)
   },
   sendBtn: {
     padding: "10px 12px",

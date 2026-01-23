@@ -6,7 +6,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #4f46e5;
+  background-color: #3b82f6;
   color: white;
   border: none;
   cursor: pointer;
@@ -18,7 +18,7 @@
 }
 
 .chatbot-toggle:hover {
-  background-color: #4338ca;
+  background-color: #2563eb;
   transform: scale(1.05);
 }
 
