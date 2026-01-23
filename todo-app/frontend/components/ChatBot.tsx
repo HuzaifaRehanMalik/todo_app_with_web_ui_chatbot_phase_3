@@ -32,7 +32,11 @@ const API_BASE_URL =
  * - No external CSS file required
  * - Props are optional, so <ChatBot /> compiles
  */
-export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps) {
+export default function ChatBot({
+  isOpen,
+  onClose,
+  onTodoUpdate,
+}: ChatBotProps) {
   const isControlled = typeof isOpen === "boolean";
 
   const [internalOpen, setInternalOpen] = useState(false);
@@ -62,7 +66,10 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
     if (!isControlled) setInternalOpen(true);
   };
 
-  const canSend = useMemo(() => input.trim().length > 0 && !loading, [input, loading]);
+  const canSend = useMemo(
+    () => input.trim().length > 0 && !loading,
+    [input, loading]
+  );
 
   async function sendMessage() {
     if (!canSend) return;
@@ -80,14 +87,7 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
     setLoading(true);
 
     try {
-      // Adjust this endpoint to your backend chatbot route.
-      // Common choices:
-      //  - /chat
-      //  - /chatbot
-      //  - /assistant
-      //  - /ai/chat
-      //
-      // If your backend route is different, just change CHAT_ENDPOINT below.
+      // If your backend route is different, change this:
       const CHAT_ENDPOINT = "/chat";
 
       const res = await fetch(`${API_BASE_URL}${CHAT_ENDPOINT}`, {
@@ -97,14 +97,13 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
       });
 
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
+        const errJson: any = await res.json().catch(() => ({}));
         const msg =
-          errJson?.detail ||
-          `Chat API failed: ${res.status} ${res.statusText}`;
+          errJson?.detail || `Chat API failed: ${res.status} ${res.statusText}`;
         throw new Error(msg);
       }
 
-      const data = await res.json().catch(() => null);
+      const data: any = await res.json().catch(() => null);
 
       // Accept a few common response shapes
       const assistantText =
@@ -124,11 +123,13 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
       if (data?.todo_changed || data?.todos_updated) {
         onTodoUpdate?.();
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Something went wrong.";
+
       const botMsg: ChatMessage = {
         id: cryptoRandomId(),
         role: "assistant",
-        content: `⚠️ ${e?.message || "Something went wrong."}`,
+        content: `⚠️ ${message}`,
       };
       setMessages((prev) => [...prev, botMsg]);
     } finally {
@@ -141,7 +142,11 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
     return (
       <div style={styles.fabWrap}>
         {!isControlled && (
-          <button style={styles.fab} onClick={openChat} aria-label="Open ChatBot">
+          <button
+            style={styles.fab}
+            onClick={openChat}
+            aria-label="Open ChatBot"
+          >
             💬
           </button>
         )}
@@ -154,7 +159,11 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
       <div style={styles.panel}>
         <div style={styles.header}>
           <div style={styles.title}>ChatBot</div>
-          <button style={styles.closeBtn} onClick={closeChat} aria-label="Close ChatBot">
+          <button
+            style={styles.closeBtn}
+            onClick={closeChat}
+            aria-label="Close ChatBot"
+          >
             ✕
           </button>
         </div>
@@ -181,43 +190,47 @@ export default function ChatBot({ isOpen, onClose, onTodoUpdate }: ChatBotProps)
 
           {loading && (
             <div style={{ ...styles.bubbleRow, justifyContent: "flex-start" }}>
-              <div style={{ ...styles.bubble, ...styles.botBubble }}>Typing…</div>
+              <div style={{ ...styles.bubble, ...styles.botBubble }}>
+                Typing…
+              </div>
             </div>
           )}
         </div>
 
-        <div style={styles.footer}>
+        <form
+          style={styles.footer}
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendMessage();
+          }}
+        >
           <input
             style={styles.input}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message…"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
-            }}
           />
           <button
+            type="submit"
             style={{
               ...styles.sendBtn,
               opacity: canSend ? 1 : 0.6,
               cursor: canSend ? "pointer" : "not-allowed",
             }}
-            onClick={sendMessage}
             disabled={!canSend}
           >
             Send
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
 function cryptoRandomId(): string {
-  // Safe fallback if crypto is unavailable
   try {
-    // @ts-ignore
-    return crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+    const c = typeof window !== "undefined" ? window.crypto : undefined;
+    return c?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   } catch {
     return `${Date.now()}-${Math.random()}`;
   }
@@ -239,6 +252,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "white",
     fontSize: 22,
     boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+    cursor: "pointer",
   },
   overlay: {
     position: "fixed",
