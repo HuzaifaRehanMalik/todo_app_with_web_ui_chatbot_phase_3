@@ -8,13 +8,13 @@ type ChatbotToggleProps = {
   onToggle: (isOpen: boolean) => void;
 };
 
-const ChatbotToggle: React.FC<ChatbotToggleProps> = ({ isOpen, onToggle }) => {
+export default function ChatbotToggle({ isOpen, onToggle }: ChatbotToggleProps) {
   return (
     <button
+      type="button"
       className={`chatbot-toggle ${isOpen ? "open" : ""}`}
       onClick={() => onToggle(!isOpen)}
       aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
-      type="button"
     >
       <span className="chatbot-icon">
         {isOpen ? (
@@ -35,6 +35,4 @@ const ChatbotToggle: React.FC<ChatbotToggleProps> = ({ isOpen, onToggle }) => {
       </span>
     </button>
   );
-};
-
-export default ChatbotToggle;
+}
