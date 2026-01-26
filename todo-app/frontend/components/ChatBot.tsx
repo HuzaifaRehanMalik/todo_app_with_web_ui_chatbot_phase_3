@@ -11,27 +11,14 @@ type ChatMessage = {
 };
 
 export type ChatBotProps = {
-  /**
-   * Optional: If you pass isOpen, the widget behaves like a controlled component.
-   * If you DON'T pass it, it behaves like an uncontrolled widget with its own open/close button.
-   */
   isOpen?: boolean;
   onClose?: () => void;
-
-  /**
-   * Optional callback if your chatbot actions change todos (create/update/delete) and you want to refresh list.
-   */
   onTodoUpdate?: () => void;
 };
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
-/**
- * ChatBot (self-contained)
- * - No external CSS file required
- * - Props are optional, so <ChatBot /> compiles
- */
 export default function ChatBot({
   isOpen,
   onClose,
@@ -50,26 +37,23 @@ export default function ChatBot({
       id: cryptoRandomId(),
       role: "assistant",
       content:
-        "Hi! I can help you with your todos. Tell me what you want to do (e.g., “add buy milk”, “show my todos”).",
+        "Hi! 👋 I can help you manage your todos. Try: “add buy milk” or “show my todos”.",
     },
   ]);
-
-  const closeChat = () => {
-    if (isControlled) {
-      onClose?.();
-    } else {
-      setInternalOpen(false);
-    }
-  };
-
-  const openChat = () => {
-    if (!isControlled) setInternalOpen(true);
-  };
 
   const canSend = useMemo(
     () => input.trim().length > 0 && !loading,
     [input, loading]
   );
+
+  const closeChat = () => {
+    if (isControlled) onClose?.();
+    else setInternalOpen(false);
+  };
+
+  const openChat = () => {
+    if (!isControlled) setInternalOpen(true);
+  };
 
   async function sendMessage() {
     if (!canSend) return;
@@ -77,75 +61,76 @@ export default function ChatBot({
     const text = input.trim();
     setInput("");
 
-    const userMsg: ChatMessage = {
-      id: cryptoRandomId(),
-      role: "user",
-      content: text,
-    };
+    setMessages((prev) => [
+      ...prev,
+      { id: cryptoRandomId(), role: "user", content: text },
+    ]);
 
-    setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
     try {
-      // If your backend route is different, change this:
-      const CHAT_ENDPOINT = "/chat";
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
 
-      const res = await fetch(`${API_BASE_URL}${CHAT_ENDPOINT}`, {
+      if (!token) {
+        throw new Error("Please login to use the chatbot.");
+      }
+
+      const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ message: text }),
       });
 
       if (!res.ok) {
-        const errJson: any = await res.json().catch(() => ({}));
-        const msg =
-          errJson?.detail || `Chat API failed: ${res.status} ${res.statusText}`;
-        throw new Error(msg);
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.detail || "Chat request failed");
       }
 
-      const data: any = await res.json().catch(() => null);
+      const data = await res.json();
 
-      // Accept a few common response shapes
-      const assistantText =
-        (data && (data.reply || data.message || data.response || data.content)) ??
+      const reply =
+        data?.reply ||
+        data?.message ||
+        data?.response ||
+        data?.content ||
         "Done.";
 
-      const botMsg: ChatMessage = {
-        id: cryptoRandomId(),
-        role: "assistant",
-        content: String(assistantText),
-      };
+      setMessages((prev) => [
+        ...prev,
+        { id: cryptoRandomId(), role: "assistant", content: String(reply) },
+      ]);
 
-      setMessages((prev) => [...prev, botMsg]);
-
-      // If your backend returns something like { todo_changed: true }
-      // you can trigger refresh
       if (data?.todo_changed || data?.todos_updated) {
         onTodoUpdate?.();
       }
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Something went wrong.";
-
-      const botMsg: ChatMessage = {
-        id: cryptoRandomId(),
-        role: "assistant",
-        content: `⚠️ ${message}`,
-      };
-      setMessages((prev) => [...prev, botMsg]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: cryptoRandomId(),
+          role: "assistant",
+          content: `⚠️ ${err.message || "Something went wrong."}`,
+        },
+      ]);
     } finally {
       setLoading(false);
     }
   }
 
-  // If closed, show a small floating button (only when uncontrolled)
+  /* Floating button */
   if (!open) {
     return (
-      <div style={styles.fabWrap}>
+      <div className="fixed bottom-5 right-5 z-50">
         {!isControlled && (
           <button
-            style={styles.fab}
             onClick={openChat}
-            aria-label="Open ChatBot"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg hover:bg-blue-700"
           >
             💬
           </button>
@@ -155,200 +140,79 @@ export default function ChatBot({
   }
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.panel}>
-        <div style={styles.header}>
-          <div style={styles.title}>ChatBot</div>
-          <button
-            style={styles.closeBtn}
-            onClick={closeChat}
-            aria-label="Close ChatBot"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div style={styles.body}>
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              style={{
-                ...styles.bubbleRow,
-                justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-              }}
-            >
-              <div
-                style={{
-                  ...styles.bubble,
-                  ...(m.role === "user" ? styles.userBubble : styles.botBubble),
-                }}
-              >
-                {m.content}
-              </div>
-            </div>
-          ))}
-
-          {loading && (
-            <div style={{ ...styles.bubbleRow, justifyContent: "flex-start" }}>
-              <div style={{ ...styles.bubble, ...styles.botBubble }}>
-                Typing…
-              </div>
-            </div>
-          )}
-        </div>
-
-        <form
-          style={styles.footer}
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendMessage();
-          }}
+    <div className="fixed bottom-5 right-5 z-50 h-[520px] w-[360px] max-w-[calc(100vw-40px)] rounded-2xl bg-slate-50 shadow-2xl flex flex-col border">
+      {/* Header */}
+      <div className="flex items-center justify-between rounded-t-2xl bg-blue-600 px-4 py-3 text-white">
+        <h3 className="font-semibold text-sm">Todo ChatBot</h3>
+        <button
+          onClick={closeChat}
+          className="rounded-lg bg-blue-700 px-2 py-1 text-sm hover:bg-blue-800"
         >
-          <input
-            style={styles.input}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message…"
-          />
-          <button
-            type="submit"
-            style={{
-              ...styles.sendBtn,
-              opacity: canSend ? 1 : 0.6,
-              cursor: canSend ? "pointer" : "not-allowed",
-            }}
-            disabled={!canSend}
-          >
-            Send
-          </button>
-        </form>
+          ✕
+        </button>
       </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex ${
+              m.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "bg-blue-600 text-white rounded-br-md"
+                  : "bg-blue-100 text-blue-700 rounded-bl-md"
+              }`}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="rounded-2xl rounded-bl-md bg-blue-100 px-3 py-2 text-sm text-blue-700">
+              Typing…
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage();
+        }}
+        className="flex gap-2 border-t bg-white p-3"
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message…"
+          className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm !text-black !caret-black placeholder-gray-400 outline-none focus:border-blue-500"
+
+        />
+        <button
+          type="submit"
+          disabled={!canSend}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
 
 function cryptoRandomId(): string {
   try {
-    const c = typeof window !== "undefined" ? window.crypto : undefined;
-    return c?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+    return crypto.randomUUID();
   } catch {
     return `${Date.now()}-${Math.random()}`;
   }
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  fabWrap: {
-    position: "fixed",
-    right: 18,
-    bottom: 18,
-    zIndex: 50,
-  },
-  fab: {
-    width: 54,
-    height: 54,
-    borderRadius: 999,
-    border: "none",
-    background: "#3b82f6",
-    color: "white",
-    fontSize: 22,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-    cursor: "pointer",
-  },
-  overlay: {
-    position: "fixed",
-    right: 18,
-    bottom: 18,
-    width: 360,
-    maxWidth: "calc(100vw - 36px)",
-    height: 520,
-    maxHeight: "calc(100vh - 36px)",
-    zIndex: 60,
-  },
-  panel: {
-    width: "100%",
-    height: "100%",
-    background: "#f8fafc",
-    borderRadius: 14,
-    boxShadow: "0 12px 30px rgba(0,0,0,0.25)",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    border: "1px solid rgba(0,0,0,0.08)",
-  },
-  header: {
-    padding: "12px 12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottom: "1px solid rgba(0,0,0,0.08)",
-    background: "#3b82f6",
-  },
-  title: {
-    fontWeight: 700,
-    fontSize: 14,
-    color: "white",
-  },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    border: "none",
-    background: "#2563eb",
-    color: "white",
-    cursor: "pointer",
-  },
-  body: {
-    flex: 1,
-    padding: 12,
-    overflowY: "auto",
-    background: "#f8fafc",
-  },
-  bubbleRow: {
-    display: "flex",
-    marginBottom: 10,
-  },
-  bubble: {
-    maxWidth: "85%",
-    padding: "10px 12px",
-    borderRadius: 14,
-    fontSize: 13,
-    lineHeight: 1.35,
-    whiteSpace: "pre-wrap",
-  },
-  userBubble: {
-    background: "#3b82f6",
-    color: "white",
-    borderBottomRightRadius: 6,
-  },
-  botBubble: {
-    background: "#eef2ff",
-    color: "#3b82f6",
-    borderBottomLeftRadius: 6,
-  },
-  footer: {
-    padding: 10,
-    display: "flex",
-    gap: 8,
-    borderTop: "1px solid rgba(0,0,0,0.08)",
-    background: "#f8fafc",
-  },
-  input: {
-  flex: 1,
-  padding: "10px 12px",
-  borderRadius: 12,
-  border: "1px solid rgba(0,0,0,0.12)",
-  outline: "none",
-  fontSize: 13,
-  background: "white",        // ✅ background
-  color: "#111827",           // ✅ text color (dark)
-  },
-  sendBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "none",
-    background: "#3b82f6",
-    color: "white",
-    fontWeight: 600,
-  },
-};
-// new
