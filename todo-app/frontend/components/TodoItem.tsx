@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Todo } from "@/types/todo";
 import { updateTodo, deleteTodo } from "@/services/todoService";
 import { Field, Icon, PillButton, TextArea, type IconName } from "@/components/ui";
+import DuePicker from "@/components/DuePicker";
+import { dueGroup, relativeDayLabel } from "@/lib/dates";
 
 interface TodoItemProps {
   todo: Todo;
@@ -16,6 +18,7 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || "");
+  const [editDue, setEditDue] = useState<string | null>(todo.due_date ?? null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSaveEdit = async () => {
@@ -24,6 +27,7 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
       const updatedTodo = await updateTodo(todo.id, {
         title: editTitle,
         description: editDescription || undefined,
+        due_date: editDue,
       });
       onUpdate(updatedTodo);
       setIsEditing(false);
@@ -79,12 +83,17 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
           rows={3}
           disabled={isLoading}
         />
+        <div>
+          <span className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">Due</span>
+          <DuePicker value={editDue} onChange={setEditDue} disabled={isLoading} />
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
             onClick={() => {
               setIsEditing(false);
               setEditTitle(todo.title);
               setEditDescription(todo.description || "");
+              setEditDue(todo.due_date ?? null);
             }}
             disabled={isLoading}
             className="rounded-full px-5 py-3 text-sm text-ink-soft transition-all duration-500 ease-spring hover:bg-ink/[0.05] hover:text-ink active:scale-[0.98]"
@@ -105,6 +114,7 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
   }
 
   const edited = new Date(todo.updated_at).getTime() !== new Date(todo.created_at).getTime();
+  const overdue = !todo.completed && dueGroup(todo.due_date) === "overdue";
 
   return (
     <div
@@ -146,11 +156,22 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
             {todo.description}
           </p>
         )}
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-muted">
-          <span className="flex items-center gap-1">
-            <Icon name="clock" className="w-3 h-3" />
-            {new Date(todo.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-          </span>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
+          {todo.due_date ? (
+            <span
+              className={`flex items-center gap-1 rounded-full px-2 py-px ${
+                overdue ? "bg-clay-soft text-clay" : todo.completed ? "" : "bg-ink/[0.05] text-ink-soft"
+              }`}
+            >
+              <Icon name="clock" className="w-3 h-3" />
+              {overdue ? `Overdue · ${relativeDayLabel(todo.due_date)}` : relativeDayLabel(todo.due_date)}
+            </span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <Icon name="clock" className="w-3 h-3" />
+              Added {new Date(todo.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </span>
+          )}
           {edited && <span className="italic">edited</span>}
           {todo.completed && (
             <span className="rounded-full bg-sage-soft px-2 py-px text-[10px] uppercase tracking-[0.14em] text-sage">Done</span>
@@ -166,7 +187,18 @@ export default function TodoItem({ todo, onUpdate, onDelete, onError }: TodoItem
           onClick={handleToggleComplete}
           disabled={isLoading}
         />
-        <RowAction icon="pencil" label="Edit" onClick={() => setIsEditing(true)} disabled={isLoading} />
+        <RowAction
+          icon="pencil"
+          label="Edit"
+          onClick={() => {
+            // Start from the latest values (the assistant may have changed them since mount).
+            setEditTitle(todo.title);
+            setEditDescription(todo.description || "");
+            setEditDue(todo.due_date ?? null);
+            setIsEditing(true);
+          }}
+          disabled={isLoading}
+        />
         <RowAction icon="trash" label="Delete" onClick={handleDelete} disabled={isLoading} danger />
       </div>
     </div>

@@ -4,19 +4,27 @@ import { useState } from "react";
 import { TodoCreate } from "@/types/todo";
 import { createTodo } from "@/services/todoService";
 import { Bezel, Field, Icon, PillButton, TextArea } from "@/components/ui";
+import DuePicker from "@/components/DuePicker";
+import { relativeDayLabel } from "@/lib/dates";
 
 interface TodoFormProps {
   onAdd: (todo: TodoCreate) => void;
   onError: (error: string) => void;
   /** "card": standalone bezel card. "inline": compact quick-add bar for the top of a list. */
   variant?: "card" | "inline";
+  /** Due date new tasks start with (e.g. the day selected in the week strip) until the user picks one. */
+  defaultDue?: string | null;
 }
 
-export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormProps) {
+export default function TodoForm({ onAdd, onError, variant = "card", defaultDue = null }: TodoFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showNote, setShowNote] = useState(false);
+  const [showDue, setShowDue] = useState(false);
+  // undefined = follow defaultDue; null = explicitly "no date"
+  const [chosenDue, setChosenDue] = useState<string | null | undefined>(undefined);
+  const due = chosenDue === undefined ? defaultDue : chosenDue;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +39,7 @@ export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormP
       const newTodo: TodoCreate = {
         title: title.trim(),
         description: description.trim() || undefined,
+        due_date: due,
       };
 
       await createTodo(newTodo);
@@ -40,6 +49,8 @@ export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormP
       setTitle("");
       setDescription("");
       setShowNote(false);
+      setShowDue(false);
+      setChosenDue(undefined);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to create todo");
     } finally {
@@ -64,16 +75,6 @@ export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormP
             className="min-w-0 flex-1 bg-transparent py-2 text-[15px] text-ink outline-none placeholder:text-muted disabled:opacity-50"
           />
           <button
-            type="button"
-            onClick={() => setShowNote(!showNote)}
-            aria-expanded={showNote}
-            className={`hidden rounded-full px-3 py-2 text-xs transition-all duration-500 ease-spring sm:block ${
-              showNote ? "bg-ink/[0.08] text-ink" : "text-muted hover:bg-ink/[0.05] hover:text-ink"
-            }`}
-          >
-            {showNote ? "Hide note" : "Add note"}
-          </button>
-          <button
             type="submit"
             disabled={isLoading || !title.trim()}
             aria-label="Add task"
@@ -89,8 +90,36 @@ export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormP
             </span>
           </button>
         </div>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 pl-11">
+          <button
+            type="button"
+            onClick={() => setShowDue(!showDue)}
+            aria-expanded={showDue}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all duration-500 ease-spring ${
+              due ? "bg-sage-soft text-sage" : showDue ? "bg-ink/[0.08] text-ink" : "text-muted hover:bg-ink/[0.05] hover:text-ink"
+            }`}
+          >
+            <Icon name="clock" className="w-3.5 h-3.5" />
+            {due ? relativeDayLabel(due) : "Set date"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowNote(!showNote)}
+            aria-expanded={showNote}
+            className={`rounded-full px-3 py-1.5 text-xs transition-all duration-500 ease-spring ${
+              showNote ? "bg-ink/[0.08] text-ink" : "text-muted hover:bg-ink/[0.05] hover:text-ink"
+            }`}
+          >
+            {showNote ? "Hide note" : "Add note"}
+          </button>
+        </div>
+        {showDue && (
+          <div className="animate-rise pb-1 pl-11 pt-2">
+            <DuePicker value={due} onChange={setChosenDue} disabled={isLoading} />
+          </div>
+        )}
         {showNote && (
-          <div className="animate-rise px-1 pb-1 pt-2">
+          <div className="animate-rise px-1 pb-1 pt-2 sm:pl-11">
             <TextArea
               aria-label="Note"
               value={description}
@@ -132,6 +161,11 @@ export default function TodoForm({ onAdd, onError, variant = "card" }: TodoFormP
           rows={3}
           disabled={isLoading}
         />
+
+        <div>
+          <span className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">Due</span>
+          <DuePicker value={due} onChange={setChosenDue} disabled={isLoading} />
+        </div>
 
         <PillButton
           type="submit"

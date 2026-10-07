@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui";
+import { todayKey } from "@/lib/dates";
 
 type ChatRole = "user" | "assistant";
 
@@ -21,7 +22,7 @@ export type ChatBotProps = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
-const SUGGESTIONS = ["Show my todos", "Add buy milk", "What's left today?"];
+const SUGGESTIONS = ["What's due today?", "Add buy milk tomorrow", "Move my first task to Friday"];
 
 export default function ChatBot({
   isOpen,
@@ -43,7 +44,7 @@ export default function ChatBot({
       id: cryptoRandomId(),
       role: "assistant",
       content:
-        "Hello — I can help you manage your list. Try “add buy milk” or “show my todos”.",
+        "Hello — I can add, schedule and finish tasks for you. Try “add call mom tomorrow” or “what’s due today?”.",
     },
   ]);
 
@@ -96,7 +97,8 @@ export default function ChatBot({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: text }),
+        // Send the local calendar day so "today"/"tomorrow" resolve in the user's timezone.
+        body: JSON.stringify({ message: text, today: todayKey() }),
       });
 
       if (!res.ok) {
