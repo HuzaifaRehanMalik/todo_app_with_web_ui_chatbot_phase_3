@@ -1,194 +1,180 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { tokenStorage } from "@/services/authService";
 import { UserPublic } from "@/types/user";
+import { Icon } from "@/components/ui";
+
+// The signed-in user lives in localStorage. Reading it as an external store keeps
+// it in sync on every render (e.g. after a route change) and across tabs.
+const subscribeToStorage = (onChange: () => void) => {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+};
+const getUserSnapshot = () => localStorage.getItem("user");
+const getServerUserSnapshot = () => null;
+
+function parseUser(json: string | null): UserPublic | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as UserPublic;
+  } catch {
+    return null;
+  }
+}
 
 export default function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<UserPublic | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const userJson = useSyncExternalStore(subscribeToStorage, getUserSnapshot, getServerUserSnapshot);
+  const user = useMemo(() => parseUser(userJson), [userJson]);
+
+  // The menu remembers the path it was opened on, so navigating closes it.
+  const [menuOpenedOn, setMenuOpenedOn] = useState<string | null>(null);
+  const isMenuOpen = menuOpenedOn === pathname;
+  const setIsMenuOpen = (open: boolean) => setMenuOpenedOn(open ? pathname : null);
 
   useEffect(() => {
-    // Check if user is logged in
-    const currentUser = tokenStorage.getUser();
-    setUser(currentUser);
-  }, [pathname]); // Re-check when route changes
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
 
   const handleLogout = () => {
     tokenStorage.clear();
-    setUser(null);
     router.push("/login");
   };
 
   const isLoginPage = pathname === "/login";
   const isSignupPage = pathname === "/signup";
-  const isHomePage = pathname === "/";
 
-  // Don't show navigation on home page
-  if (isHomePage) {
-    return null;
-  }
+  const links = user
+    ? [{ href: "/todo", label: "Today's list" }]
+    : [
+        ...(!isLoginPage ? [{ href: "/login", label: "Sign in" }] : []),
+        ...(!isSignupPage ? [{ href: "/signup", label: "Create account" }] : []),
+      ];
+
+  const initial = user ? (user.full_name || user.email).charAt(0).toUpperCase() : "";
 
   return (
-    <nav className="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/50 shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo/Brand */}
-          <Link href={user ? "/todo" : "/"} className="flex items-center gap-2 group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Todoify
+    <>
+      <header className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-4 md:pt-6">
+        <nav className="flex w-full max-w-3xl items-center justify-between gap-2 rounded-full bg-card/70 py-1.5 pl-2 pr-1.5 ring-1 ring-ink/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_40px_-24px_rgba(0,0,0,0.8)] backdrop-blur-xl md:w-max md:min-w-[560px]">
+          <Link href={user ? "/todo" : "/"} className="group flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-paper transition-transform duration-700 ease-spring group-hover:rotate-[-12deg]">
+              <Icon name="check" className="w-4 h-4" strokeWidth={1.75} />
             </span>
+            <span className="font-display text-[22px] leading-none tracking-tight">Todoify</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            {user ? (
+          {/* Desktop */}
+          <div className="hidden items-center gap-1 md:flex">
+            {links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`rounded-full px-4 py-2 text-sm transition-all duration-500 ease-spring ${
+                  pathname === l.href ? "bg-ink/[0.06] text-ink" : "text-ink-soft hover:text-ink hover:bg-ink/[0.04]"
+                }`}
+              >
+                {l.label}
+              </Link>
+            ))}
+            {user && (
               <>
-                <Link
-                  href="/todo"
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    pathname === "/todo"
-                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-                  }`}
+                <span className="mx-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm text-ink-soft">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sage-soft font-display text-base text-sage">
+                    {initial}
+                  </span>
+                  <span className="max-w-[140px] truncate">{user.full_name || user.email}</span>
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="group flex items-center gap-2 rounded-full bg-ink py-2 pl-4 pr-2 text-sm text-paper transition-all duration-500 ease-spring active:scale-[0.98]"
                 >
-                  Todos
-                </Link>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                      {user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
-                      {user.full_name || user.email}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {!isLoginPage && (
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Login
-                  </Link>
-                )}
-                {!isSignupPage && (
-                  <Link
-                    href="/signup"
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
-                  >
-                    Sign Up
-                  </Link>
-                )}
+                  Log out
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-paper/10 transition-transform duration-500 ease-spring group-hover:translate-x-0.5">
+                    <Icon name="logout" className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  </span>
+                </button>
               </>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+          {/* Hamburger morph */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-ink/[0.05] md:hidden"
+            aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
+          >
+            <span
+              className={`absolute h-px w-4 bg-ink transition-transform duration-500 ease-spring ${
+                isMenuOpen ? "rotate-45" : "-translate-y-[3px]"
+              }`}
+            />
+            <span
+              className={`absolute h-px w-4 bg-ink transition-transform duration-500 ease-spring ${
+                isMenuOpen ? "-rotate-45" : "translate-y-[3px]"
+              }`}
+            />
+          </button>
+        </nav>
+      </header>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200 dark:border-slate-700 animate-slide-in">
-            <div className="flex flex-col gap-2">
-              {user ? (
-                <>
-                  <Link
-                    href="/todo"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      pathname === "/todo"
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-                    }`}
-                  >
-                    Todos
-                  </Link>
-                  <div className="px-4 py-2 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                      {user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {user.full_name || user.email}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  {!isLoginPage && (
-                    <Link
-                      href="/login"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="px-4 py-2 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                    >
-                      Login
-                    </Link>
-                  )}
-                  {!isSignupPage && (
-                    <Link
-                      href="/signup"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200 text-center"
-                    >
-                      Sign Up
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+      {/* Mobile overlay */}
+      <div
+        className={`fixed inset-0 z-30 flex flex-col justify-end bg-paper/85 px-6 pb-16 pt-32 backdrop-blur-3xl transition-opacity duration-700 ease-spring md:hidden ${
+          isMenuOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <ul className="space-y-2">
+          {links.map((l, i) => (
+            <li key={l.href} className="overflow-hidden">
+              <Link
+                href={l.href}
+                onClick={() => setIsMenuOpen(false)}
+                style={{ transitionDelay: isMenuOpen ? `${100 + i * 60}ms` : "0ms" }}
+                className={`block font-display text-5xl tracking-tight transition-all duration-700 ease-spring ${
+                  isMenuOpen ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+                }`}
+              >
+                {l.label}
+              </Link>
+            </li>
+          ))}
+          {user && (
+            <li className="overflow-hidden">
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+                style={{ transitionDelay: isMenuOpen ? `${100 + links.length * 60}ms` : "0ms" }}
+                className={`block font-display text-5xl tracking-tight text-clay transition-all duration-700 ease-spring ${
+                  isMenuOpen ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+                }`}
+              >
+                Log out
+              </button>
+            </li>
+          )}
+        </ul>
+        {user && (
+          <p
+            style={{ transitionDelay: isMenuOpen ? "320ms" : "0ms" }}
+            className={`mt-10 text-sm text-muted transition-all duration-700 ease-spring ${
+              isMenuOpen ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+            }`}
+          >
+            Signed in as {user.full_name || user.email}
+          </p>
         )}
       </div>
-    </nav>
+    </>
   );
 }

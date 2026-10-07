@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "@/components/ui";
 
 type ChatRole = "user" | "assistant";
 
@@ -19,6 +20,8 @@ export type ChatBotProps = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
+const SUGGESTIONS = ["Show my todos", "Add buy milk", "What's left today?"];
+
 export default function ChatBot({
   isOpen,
   onClose,
@@ -31,13 +34,14 @@ export default function ChatBot({
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: cryptoRandomId(),
       role: "assistant",
       content:
-        "Hi! 👋 I can help you manage your todos. Try: “add buy milk” or “show my todos”.",
+        "Hello — I can help you manage your list. Try “add buy milk” or “show my todos”.",
     },
   ]);
 
@@ -45,6 +49,11 @@ export default function ChatBot({
     () => input.trim().length > 0 && !loading,
     [input, loading]
   );
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, loading, open]);
 
   const closeChat = () => {
     if (isControlled) onClose?.();
@@ -55,10 +64,10 @@ export default function ChatBot({
     if (!isControlled) setInternalOpen(true);
   };
 
-  async function sendMessage() {
-    if (!canSend) return;
+  async function sendMessage(override?: string) {
+    const text = (override ?? input).trim();
+    if (!text || loading) return;
 
-    const text = input.trim();
     setInput("");
 
     setMessages((prev) => [
@@ -109,13 +118,13 @@ export default function ChatBot({
       if (data?.todo_changed || data?.todos_updated) {
         onTodoUpdate?.();
       }
-    } catch (err: any) {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
           id: cryptoRandomId(),
           role: "assistant",
-          content: `⚠️ ${err.message || "Something went wrong."}`,
+          content: `⚠️ ${(err instanceof Error && err.message) || "Something went wrong."}`,
         },
       ]);
     } finally {
@@ -123,16 +132,23 @@ export default function ChatBot({
     }
   }
 
-  /* Floating button */
+  /* Floating launcher */
   if (!open) {
     return (
-      <div className="fixed bottom-5 right-5 z-50">
+      <div className="fixed bottom-5 right-4 z-40 md:bottom-8 md:right-8">
         {!isControlled && (
           <button
             onClick={openChat}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg hover:bg-blue-700"
+            aria-label="Open assistant"
+            className="group animate-rise flex items-center gap-3 rounded-full bg-ink py-1.5 pl-5 pr-1.5 text-sm text-paper shadow-[0_24px_48px_-20px_rgba(0,0,0,0.9)] transition-all duration-500 ease-spring hover:-translate-y-0.5 active:scale-[0.98]"
           >
-            💬
+            <span className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-sage-soft" />
+              Ask Todoify
+            </span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 transition-transform duration-500 ease-spring group-hover:scale-105 group-hover:rotate-[-8deg]">
+              <Icon name="chat" />
+            </span>
           </button>
         )}
       </div>
@@ -140,71 +156,114 @@ export default function ChatBot({
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 h-[520px] w-[360px] max-w-[calc(100vw-40px)] rounded-2xl bg-slate-50 shadow-2xl flex flex-col border">
-      {/* Header */}
-      <div className="flex items-center justify-between rounded-t-2xl bg-blue-600 px-4 py-3 text-white">
-        <h3 className="font-semibold text-sm">Todo ChatBot</h3>
-        <button
-          onClick={closeChat}
-          className="rounded-lg bg-blue-700 px-2 py-1 text-sm hover:bg-blue-800"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${
-              m.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                m.role === "user"
-                  ? "bg-blue-600 text-white rounded-br-md"
-                  : "bg-blue-100 text-blue-700 rounded-bl-md"
-              }`}
+    <div className="fixed inset-x-3 bottom-3 z-40 animate-rise md:inset-x-auto md:bottom-8 md:right-8 md:w-[400px]">
+      <div className="rounded-[2rem] bg-ink/[0.05] p-1.5 ring-1 ring-ink/[0.08] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
+        <div className="flex h-[min(560px,calc(100dvh-6rem))] flex-col overflow-hidden rounded-[calc(2rem-0.375rem)] bg-card shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pb-3 pt-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-paper">
+                <Icon name="spark" />
+              </span>
+              <div>
+                <h3 className="font-display text-xl leading-none">Todoify</h3>
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                  <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+                  Assistant
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={closeChat}
+              aria-label="Close assistant"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-500 ease-spring hover:bg-ink/[0.06] hover:text-ink active:scale-90"
             >
-              {m.content}
-            </div>
+              <Icon name="close" />
+            </button>
           </div>
-        ))}
 
-        {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-blue-100 px-3 py-2 text-sm text-blue-700">
-              Typing…
-            </div>
+          <div className="mx-5 h-px bg-ink/[0.06]" />
+
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`animate-rise flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] whitespace-pre-wrap px-4 py-2.5 text-sm leading-relaxed ${
+                    m.role === "user"
+                      ? "rounded-[1.25rem] rounded-br-md bg-ink text-paper"
+                      : "rounded-[1.25rem] rounded-bl-md bg-paper text-ink ring-1 ring-ink/[0.05]"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-1 rounded-[1.25rem] rounded-bl-md bg-paper px-4 py-3.5 ring-1 ring-ink/[0.05]">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="dot-breathe h-1.5 w-1.5 rounded-full bg-ink/50"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.length === 1 && !loading && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => sendMessage(s)}
+                    className="rounded-full px-3 py-1.5 text-xs text-ink-soft ring-1 ring-ink/10 transition-all duration-500 ease-spring hover:bg-ink hover:text-paper hover:ring-ink active:scale-[0.97]"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendMessage();
+            }}
+            className="p-3"
+          >
+            <div className="flex items-center gap-2 rounded-full bg-paper/80 p-1.5 pl-5 ring-1 ring-ink/[0.07] transition-all duration-500 ease-spring focus-within:bg-card focus-within:ring-ink/20">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about your list…"
+                aria-label="Message"
+                className="min-w-0 flex-1 bg-transparent text-sm text-ink caret-ink outline-none placeholder:text-muted"
+              />
+              <button
+                type="submit"
+                disabled={!canSend}
+                aria-label="Send"
+                className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-paper transition-all duration-500 ease-spring active:scale-90 disabled:bg-ink/15 disabled:text-ink/40"
+              >
+                <Icon
+                  name="send"
+                  className="w-4 h-4 transition-transform duration-500 ease-spring group-hover:translate-x-0.5 group-hover:-translate-y-px"
+                  strokeWidth={1.5}
+                />
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage();
-        }}
-        className="flex gap-2 border-t bg-white p-3"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message…"
-          className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm !text-black !caret-black placeholder-gray-400 outline-none focus:border-blue-500"
-
-        />
-        <button
-          type="submit"
-          disabled={!canSend}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
     </div>
   );
 }

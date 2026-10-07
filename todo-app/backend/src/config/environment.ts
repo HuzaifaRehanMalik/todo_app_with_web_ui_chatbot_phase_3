@@ -29,7 +29,7 @@ const config: Config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: process.env.JWT_SECRET,
-  aiProviderApiKey: process.env.OPENAI_API_KEY || process.env.ANY_AI_PROVIDER_KEY,
+  aiProviderApiKey: process.env.GEMINI_API_KEY || process.env.ANY_AI_PROVIDER_KEY,
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
@@ -44,7 +44,7 @@ const config: Config = {
 };
 
 // Validate required environment variables
-const requiredVars = ['JWT_SECRET', 'OPENAI_API_KEY'];
+const requiredVars = ['JWT_SECRET', 'GEMINI_API_KEY'];
 const missingVars = requiredVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {

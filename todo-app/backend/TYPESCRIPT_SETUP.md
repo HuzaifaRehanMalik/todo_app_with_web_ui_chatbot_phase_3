@@ -22,7 +22,7 @@ cp .env.example .env
 
 Edit `.env` with your values:
 - Set `JWT_SECRET` to a secure random string
-- Set `OPENAI_API_KEY` to your OpenAI API key
+- Set `GEMINI_API_KEY` to your OpenAI API key
 - Adjust other settings as needed
 
 ### 3. Development Mode

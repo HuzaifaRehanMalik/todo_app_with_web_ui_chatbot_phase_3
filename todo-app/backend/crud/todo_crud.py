@@ -34,7 +34,7 @@ def get_all_todos(session: Session, user_id: int, skip: int = 0, limit: int = 10
 
 def update_todo(session: Session, todo_id: int, todo_update: TodoUpdate, user_id: int) -> Optional[Todo]:
     """Update a todo item, ensuring it belongs to the user"""
-    from datetime import datetime
+    from datetime import datetime, timezone
     
     db_todo = session.get(Todo, todo_id)
     if not db_todo or db_todo.user_id != user_id:
@@ -45,7 +45,7 @@ def update_todo(session: Session, todo_id: int, todo_update: TodoUpdate, user_id
         setattr(db_todo, key, value)
     
     # Update the updated_at timestamp
-    db_todo.updated_at = datetime.utcnow()
+    db_todo.updated_at = datetime.now(timezone.utc)
 
     session.add(db_todo)
     session.commit()
@@ -66,14 +66,14 @@ def delete_todo(session: Session, todo_id: int, user_id: int) -> bool:
 
 def complete_todo(session: Session, todo_id: int, user_id: int) -> Optional[Todo]:
     """Mark a todo as completed, ensuring it belongs to the user"""
-    from datetime import datetime
+    from datetime import datetime, timezone
     
     db_todo = session.get(Todo, todo_id)
     if not db_todo or db_todo.user_id != user_id:
         return None
 
     db_todo.completed = True
-    db_todo.updated_at = datetime.utcnow()
+    db_todo.updated_at = datetime.now(timezone.utc)
     session.add(db_todo)
     session.commit()
     session.refresh(db_todo)

@@ -2,8 +2,14 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { tokenStorage } from "@/services/authService";
+import { Bezel, Eyebrow, Icon, PillLink, Reveal } from "@/components/ui";
+
+const previewTasks = [
+  { title: "Draft the quarterly letter", meta: "Writing · 40 min", done: true },
+  { title: "Call the framer about the prints", meta: "Errand · 10 min", done: false },
+  { title: "Read two chapters, slowly", meta: "Evening · no rush", done: false },
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -18,90 +24,140 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-6">
-      <main className="max-w-5xl w-full">
-        {/* Hero Section */}
-        <section className="text-center mb-16 animate-fade-in">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-            Todoify
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-4 max-w-2xl mx-auto">
-            Organize your day, focus on what matters, and get more done.
-          </p>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-          A powerful todo app that transforms daily plans into action, helping you stay organized, focused, and productive throughout the day.
-          </p>
-        </section>
-
-        {/* Features Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <div className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/50 p-6 hover:shadow-2xl hover:scale-105 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-300 cursor-pointer">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-all duration-300">
-              <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">Fast & Minimal</h3>
-            <p className="text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
-              Add and manage tasks with a clean, distraction-free interface. Get things done faster.
+    <main className="overflow-x-clip">
+      {/* Hero — editorial split */}
+      <section className="mx-auto grid min-h-[100dvh] max-w-6xl grid-cols-1 items-center gap-16 px-4 pb-24 pt-36 md:grid-cols-12 md:px-8 md:pt-40">
+        <div className="md:col-span-7">
+          <Reveal>
+            <Eyebrow>A quieter to-do list</Eyebrow>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1 className="mt-8 font-display text-[clamp(3.5rem,9vw,7.5rem)] leading-[0.92] tracking-[-0.02em] text-ink">
+              Less noise.
+              <br />
+              <em className="text-sage">More&nbsp;done.</em>
+            </h1>
+          </Reveal>
+          <Reveal delay={160}>
+            <p className="mt-8 max-w-md text-lg leading-relaxed text-ink-soft">
+              Todoify turns the day&apos;s scattered intentions into a short, calm list — and an assistant
+              that adds, finishes and tidies tasks when you simply ask.
             </p>
-          </div>
+          </Reveal>
+          <Reveal delay={240} className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <PillLink href="/signup">Start your list</PillLink>
+            <PillLink href="/login" variant="ghost">
+              I have an account
+            </PillLink>
+          </Reveal>
+        </div>
 
-          <div className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/50 p-6 hover:shadow-2xl hover:scale-105 hover:border-purple-300 dark:hover:border-purple-600 transition-all duration-300 cursor-pointer">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 mb-4 group-hover:scale-110 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 transition-all duration-300">
-              <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">Secure & Private</h3>
-            <p className="text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
-              JWT-based authentication keeps your account and todos private. Your data stays yours.
-            </p>
-          </div>
+        {/* Preview stack */}
+        <div className="relative md:col-span-5">
+          <Reveal delay={200}>
+            <Bezel className="md:rotate-[2deg]" coreClassName="p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">Tuesday</span>
+                <span className="font-display text-2xl text-ink-soft">1 of 3</span>
+              </div>
+              <ul className="mt-6 space-y-1">
+                {previewTasks.map((t) => (
+                  <li key={t.title} className="flex items-start gap-4 rounded-2xl px-2 py-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 ${
+                        t.done ? "bg-sage text-paper ring-sage" : "ring-ink/20"
+                      }`}
+                    >
+                      {t.done && <Icon name="check" className="w-3 h-3" strokeWidth={2} />}
+                    </span>
+                    <span>
+                      <span className={`block text-[15px] ${t.done ? "text-muted line-through decoration-ink/30" : "text-ink"}`}>
+                        {t.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted">{t.meta}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Bezel>
+          </Reveal>
+          <Reveal delay={360} className="relative z-10 mt-4 md:-mt-10 md:ml-[-3rem] md:mr-12">
+            <Bezel tone="ink" className="md:-rotate-[2deg]" coreClassName="p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper/10">
+                  <Icon name="spark" className="w-4 h-4" />
+                </span>
+                <p className="text-sm leading-relaxed text-paper/80">
+                  <span className="text-paper">&ldquo;Add pick up flowers for Sunday&rdquo;</span>
+                  <br />
+                  Done — it&apos;s on your list.
+                </p>
+              </div>
+            </Bezel>
+          </Reveal>
+        </div>
+      </section>
 
-          <div className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/50 p-6 hover:shadow-2xl hover:scale-105 hover:border-green-300 dark:hover:border-green-600 transition-all duration-300 cursor-pointer">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 mb-4 group-hover:scale-110 group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition-all duration-300">
-              <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">Snappy UX</h3>
-            <p className="text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
-              Instant updates, subtle animations, and keyboard-friendly controls for a delightful experience.
-            </p>
-          </div>
-        </section>
+      {/* Bento */}
+      <section className="mx-auto max-w-6xl px-4 py-24 md:px-8 md:py-32">
+        <Reveal className="max-w-2xl">
+          <Eyebrow>Considered details</Eyebrow>
+          <h2 className="mt-6 font-display text-5xl leading-[1] tracking-[-0.02em] md:text-6xl">
+            Built to get out of <em className="text-sage">your way.</em>
+          </h2>
+        </Reveal>
 
-        {/* CTA Buttons */}
-        <section className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link
-            href="/signup"
-            className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2 min-w-[200px] justify-center"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span>Get Started</span>
-          </Link>
+        <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-12 md:grid-rows-2">
+          <Reveal className="md:col-span-7 md:row-span-2">
+            <Bezel coreClassName="flex h-full flex-col justify-between gap-16 p-8 md:p-10">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sage-soft text-sage">
+                <Icon name="chat" className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="font-display text-4xl leading-tight tracking-tight">Talk to your list.</h3>
+                <p className="mt-4 max-w-sm leading-relaxed text-ink-soft">
+                  The built-in assistant understands plain language. Ask it to add, show or finish a task and
+                  your list updates beside you.
+                </p>
+              </div>
+            </Bezel>
+          </Reveal>
+          <Reveal delay={100} className="md:col-span-5">
+            <Bezel coreClassName="h-full p-8">
+              <Icon name="lock" className="w-5 h-5 text-sage" />
+              <h3 className="mt-8 text-lg font-semibold tracking-tight">Private by default</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                Token-based sign-in keeps every list visible to you alone.
+              </p>
+            </Bezel>
+          </Reveal>
+          <Reveal delay={200} className="md:col-span-5">
+            <Bezel coreClassName="h-full p-8">
+              <Icon name="download" className="w-5 h-5 text-sage" />
+              <h3 className="mt-8 text-lg font-semibold tracking-tight">Take it with you</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                Export your tasks whenever you like. Your data stays yours.
+              </p>
+            </Bezel>
+          </Reveal>
+        </div>
+      </section>
 
-          <Link
-            href="/login"
-            className="group relative px-8 py-4 bg-white dark:bg-slate-800 text-gray-900 dark:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-gray-300 dark:border-slate-600 flex items-center gap-2 min-w-[200px] justify-center"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-            </svg>
-            <span>Sign In</span>
-          </Link>
-        </section>
-
-        {/* Footer Note */}
-        <footer className="mt-16 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Secure authentication powered by JWT • Built with Next.js & Tailwind CSS
-          </p>
+      {/* Closing CTA */}
+      <section className="mx-auto max-w-6xl px-4 pb-24 pt-8 md:px-8 md:pb-32">
+        <Reveal>
+          <Bezel tone="ink" coreClassName="flex flex-col items-start justify-between gap-10 p-10 md:flex-row md:items-end md:p-14">
+            <h2 className="max-w-lg font-display text-5xl leading-[1] tracking-[-0.02em] md:text-6xl">
+              Tomorrow starts with <em className="text-sage-soft">one line.</em>
+            </h2>
+            <PillLink href="/signup" variant="sage">Create your list</PillLink>
+          </Bezel>
+        </Reveal>
+        <footer className="mt-16 flex flex-col justify-between gap-2 text-xs text-muted md:flex-row">
+          <span>© Todoify</span>
+          <span>Secure authentication with JWT · Next.js & Tailwind CSS</span>
         </footer>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }

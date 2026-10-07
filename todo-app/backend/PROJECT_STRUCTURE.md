@@ -170,9 +170,9 @@ PORT=3000
 NODE_ENV=development
 
 JWT_SECRET=your_secure_secret_key
-OPENAI_API_KEY=your_openai_key
+GEMINI_API_KEY=your_openai_key
 
-AI_MODEL=gpt-3.5-turbo
+AI_MODEL=gemini-2.5-flash
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=todo_app

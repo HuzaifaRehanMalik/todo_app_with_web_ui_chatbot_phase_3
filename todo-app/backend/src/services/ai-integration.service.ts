@@ -1,6 +1,6 @@
 /**
  * AI Integration Service
- * Handles communication with AI providers (e.g., OpenAI)
+ * Handles communication with AI providers (Google Gemini)
  */
 
 import dotenv from 'dotenv';
@@ -28,12 +28,13 @@ export interface NormalizedResponse extends AIResponse {
 
 class AIIntegrationService {
   private apiKey: string | undefined;
-  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
+  // Gemini's OpenAI-compatible chat completions endpoint
+  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY;
-    this.model = process.env.AI_MODEL || 'gpt-3.5-turbo';
+    this.apiKey = process.env.GEMINI_API_KEY;
+    this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   }
 
   /**
@@ -49,7 +50,7 @@ class AIIntegrationService {
   async sendMessage(message: string, context: string = ''): Promise<AIResponse> {
     if (!this.isConfigured()) {
       throw new Error(
-        'AI service is not configured. Please set OPENAI_API_KEY in environment variables.'
+        'AI service is not configured. Please set GEMINI_API_KEY in environment variables.'
       );
     }
 

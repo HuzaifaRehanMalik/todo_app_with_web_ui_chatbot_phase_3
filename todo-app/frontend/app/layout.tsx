@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Modern Todo App",
-  description: "A beautiful and modern todo application",
+  title: "Todoify",
+  description: "A calm, considered place for the things you mean to do.",
 };
 
 export default function RootLayout({
@@ -28,6 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="grain" aria-hidden />
         <Navigation />
         {children}
       </body>

@@ -226,7 +226,7 @@ cp .env.example .env
 
 # 2. Add values to .env
 JWT_SECRET=your_secret_here
-OPENAI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 
 # 3. dotenv is loaded at top of config file
 import dotenv from 'dotenv';

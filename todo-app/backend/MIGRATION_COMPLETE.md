@@ -191,12 +191,12 @@ docker run -p 3000:3000 todo-backend:latest
 
 Required in `.env`:
 - `JWT_SECRET` - JWT signing secret
-- `OPENAI_API_KEY` - OpenAI API key
+- `GEMINI_API_KEY` - OpenAI API key
 - `NODE_ENV` - development/production
 - `PORT` - Server port
 
 Optional:
-- `AI_MODEL` - AI model to use (default: gpt-3.5-turbo)
+- `AI_MODEL` - AI model to use (default: gemini-2.5-flash)
 - `DB_*` - Database configuration
 - `CORS_*` - CORS settings
 
