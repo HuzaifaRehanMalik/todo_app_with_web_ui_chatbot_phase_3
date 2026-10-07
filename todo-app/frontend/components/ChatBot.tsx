@@ -13,6 +13,7 @@ type ChatMessage = {
 
 export type ChatBotProps = {
   isOpen?: boolean;
+  onOpen?: () => void;
   onClose?: () => void;
   onTodoUpdate?: () => void;
 };
@@ -24,6 +25,7 @@ const SUGGESTIONS = ["Show my todos", "Add buy milk", "What's left today?"];
 
 export default function ChatBot({
   isOpen,
+  onOpen,
   onClose,
   onTodoUpdate,
 }: ChatBotProps) {
@@ -61,7 +63,8 @@ export default function ChatBot({
   };
 
   const openChat = () => {
-    if (!isControlled) setInternalOpen(true);
+    if (isControlled) onOpen?.();
+    else setInternalOpen(true);
   };
 
   async function sendMessage(override?: string) {
@@ -136,7 +139,7 @@ export default function ChatBot({
   if (!open) {
     return (
       <div className="fixed bottom-5 right-4 z-40 md:bottom-8 md:right-8">
-        {!isControlled && (
+        {(!isControlled || onOpen) && (
           <button
             onClick={openChat}
             aria-label="Open assistant"
