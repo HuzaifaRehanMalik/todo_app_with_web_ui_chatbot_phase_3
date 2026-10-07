@@ -1,6 +1,6 @@
 "use client";
 
-import { UserLogin, UserCreate, AuthResponse, UserPublic } from "@/types/user";
+import { UserLogin, UserCreate, AuthResponse, UserPublic, ChangePasswordRequest } from "@/types/user";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
@@ -46,6 +46,19 @@ export async function signUp(userData: UserCreate): Promise<UserPublic> {
   return apiCall<UserPublic>("/auth/signup", {
     method: "POST",
     body: JSON.stringify(userData),
+  });
+}
+
+// Change the signed-in user's password (requires the current password)
+export async function changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
+  return apiCall<{ message: string }>("/auth/change-password", {
+    method: "POST",
+    // apiCall's own headers are replaced when options.headers is set, so include Content-Type here.
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${tokenStorage.getToken() ?? ""}`,
+    },
+    body: JSON.stringify(data),
   });
 }
 

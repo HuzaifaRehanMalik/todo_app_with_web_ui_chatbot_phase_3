@@ -1,35 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { tokenStorage } from "@/services/authService";
-import { UserPublic } from "@/types/user";
 import { Icon } from "@/components/ui";
-
-// The signed-in user lives in localStorage. Reading it as an external store keeps
-// it in sync on every render (e.g. after a route change) and across tabs.
-const subscribeToStorage = (onChange: () => void) => {
-  window.addEventListener("storage", onChange);
-  return () => window.removeEventListener("storage", onChange);
-};
-const getUserSnapshot = () => localStorage.getItem("user");
-const getServerUserSnapshot = () => null;
-
-function parseUser(json: string | null): UserPublic | null {
-  if (!json) return null;
-  try {
-    return JSON.parse(json) as UserPublic;
-  } catch {
-    return null;
-  }
-}
+import { useStoredUser } from "@/lib/useStoredUser";
 
 export default function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const userJson = useSyncExternalStore(subscribeToStorage, getUserSnapshot, getServerUserSnapshot);
-  const user = useMemo(() => parseUser(userJson), [userJson]);
+  const user = useStoredUser();
 
   // The menu remembers the path it was opened on, so navigating closes it.
   const [menuOpenedOn, setMenuOpenedOn] = useState<string | null>(null);
@@ -52,7 +33,10 @@ export default function Navigation() {
   const isSignupPage = pathname === "/signup";
 
   const links = user
-    ? [{ href: "/todo", label: "Today's list" }]
+    ? [
+        { href: "/todo", label: "Today's list" },
+        { href: "/account", label: "Account" },
+      ]
     : [
         ...(!isLoginPage ? [{ href: "/login", label: "Sign in" }] : []),
         ...(!isSignupPage ? [{ href: "/signup", label: "Create account" }] : []),
