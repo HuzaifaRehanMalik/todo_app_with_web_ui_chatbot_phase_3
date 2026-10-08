@@ -101,6 +101,14 @@ export default function LoginPage() {
           autoComplete="current-password"
           trailing={<PasswordToggle shown={showPassword} onToggle={() => setShowPassword(!showPassword)} disabled={loading} />}
         />
+        <div className="-mt-3 flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-ink-soft underline decoration-ink/20 underline-offset-4 transition-colors duration-500 ease-spring hover:text-ink hover:decoration-ink"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         <PillButton type="submit" disabled={loading} loading={loading} className="w-full">
           {loading ? "Signing in…" : "Sign in"}

@@ -49,6 +49,22 @@ export async function signUp(userData: UserCreate): Promise<UserPublic> {
   });
 }
 
+// Ask for a password reset email. The backend answers the same way whether or not the email exists.
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return apiCall<{ message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+// Set a new password using the one-time token from the reset email
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  return apiCall<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}
+
 // Change the signed-in user's password (requires the current password)
 export async function changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
   return apiCall<{ message: string }>("/auth/change-password", {
